@@ -28,6 +28,7 @@ async function run() {
 
         const database = client.db("touristDB");
         const spotsCollection = database.collection("spots");
+        const countryCollection = database.collection("country");
 
         // read 
         app.get("/spots", async (req, res) => {
@@ -36,11 +37,25 @@ async function run() {
             res.send(result);
         })
 
+        // read 
+        app.get("/country", async (req, res) => {
+            const cursor = countryCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
         // find specific id 
         app.get("/spots/:id", async (req, res) => {
             const id = req.params.id;
-            const query = {_id: new ObjectId(id)};
+            const query = { _id: new ObjectId(id) };
             const result = await spotsCollection.findOne(query);
+            res.send(result);
+        })
+
+        // find email 
+        app.get("/myList/:email", async (req, res) => {
+            const result = await spotsCollection.find({ email: req.params.email }).toArray();
+            console.log(result);
             res.send(result);
         })
 
@@ -51,6 +66,40 @@ async function run() {
             const result = await spotsCollection.insertOne(newSpot);
             res.send(result);
             console.log(result);
+        })
+
+        // update
+        app.put("/spots/:id", async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updatedSpot = req.body;
+            const spot = {
+                $set: {
+                    name: updatedSpot.name,
+                    email: updatedSpot.email,
+                    image: updatedSpot.image,
+                    spot: updatedSpot.spot,
+                    country: updatedSpot.country,
+                    location: updatedSpot.location,
+                    avarage: updatedSpot.avarage,
+                    description: updatedSpot.description,
+                    season: updatedSpot.season,
+                    travel: updatedSpot.travel,
+                    totalVisitors: updatedSpot.totalVisitors
+                },
+            };
+            const result = await spotsCollection.updateOne(filter, spot, options);
+            res.send(result);
+        })
+
+        // delete
+        app.delete('/spots/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id) };
+            const result = await spotsCollection.deleteOne(query);
+            res.send(result);
         })
 
         // Send a ping to confirm a successful connection
